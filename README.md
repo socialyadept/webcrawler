@@ -8,8 +8,9 @@ A web crawler made in python that is capable of searching a keyword upto 3 level
 python 'web crawler.py'
 ```
 3. The crawler will ask you to enter an http/www link
-4. You will input the level you want the webcrawler to crawl.
-5. Press enter and enjoy the show while it saves the results obtained in a .log file.
+4. Enter the keyword you can to search from a particular website
+5. You will input the level you want the webcrawler to crawl
+6. Press enter and enjoy the show while it saves the results obtained in a .log file
 
 ## Concepts that were included in this project are:
 1. Multi threading
