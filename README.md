@@ -5,7 +5,7 @@ A web crawler made in python that is capable of searching a keyword upto 3 level
 1. Download using the command git clone
 2. Using the cmd run the file using the command 
 ```
-python 'web crawler.py'
+python web_crawler.py
 ```
 3. The crawler will ask you to enter an http/www link
 4. Enter the keyword you can to search from a particular website
