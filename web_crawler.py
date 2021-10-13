@@ -1,10 +1,9 @@
 import urllib.request
 import re
 import threading
-import trace
 import sys
 from multiprocessing import Queue
-from threading import Thread, Lock
+from threading import Lock
 
 tally = 1
 iterate = 0
@@ -20,15 +19,21 @@ def findkeywordlvl(strwebsiteinp, strmatch, queueget):
         mutex.acquire()  # Mutex locking is acquired before the critical section
         if strmatch.startswith("src="):
             # The function is saving those strings that start with src or hrefs as in to save any links that are in the webpage
-            strmatch = strmatch[5:len(strmatch)]
+            strmatch = strmatch[5 : len(strmatch)]
         elif strmatch.startswith("href="):
-            strmatch = strmatch[6:len(strmatch)]
+            strmatch = strmatch[6 : len(strmatch)]
         mutex.release()  # Mutex locking is acquired before the critical section
 
         # This check exists to make sure that the link sniffed out isn't of any picture of a gif
-        if not (strmatch.endswith(".png")) or (strmatch.endswith(".bmp")) or (strmatch.endswith(".jpg")) or (strmatch.endswith(".gif")):
+        if (
+            not (strmatch.endswith(".png"))
+            or (strmatch.endswith(".bmp"))
+            or (strmatch.endswith(".jpg"))
+            or (strmatch.endswith(".gif"))
+        ):
             mutex.acquire()  # Mutex locking is acquired before the critical section
-            # this exists to check if the link sniffed is an independant url of its own or whether its a subsection of the current website it is sniffing
+            # this exists to check if the link sniffed is an independant url
+            #  of its own or whether its a subsection of the current website it is sniffing
             if strmatch.startswith("//"):
                 strwebsite2 = "http:" + strmatch
             # if the url sniffed is a subsection, the breadcrumb of the website before it is attached before it to make it a proper url to be put back into the web crawler
@@ -37,24 +42,32 @@ def findkeywordlvl(strwebsiteinp, strmatch, queueget):
             else:
                 strwebsite2 = strmatch
             mutex.release()
-            if ("\\" not in strwebsite2):
+            if "\\" not in strwebsite2:
                 try:
                     # print(strwebsite2)
                     strcontent = urllib.request.urlopen(strwebsite2).read()
                     match2 = re.findall(re.escape(strKeyword), str(strcontent))
                     match3 = re.findall(
-                        "href=[\'\"]http\://[A-z0-9_\-\./]+|href=[\'\"]\/[A-z0-9_\-\./]+|href=[\'\"]www[A-z0-9_\-\./]+", str(strcontent))
-                    match3 = match3 + \
-                        re.findall(
-                            "src=[\'\"]http\://[A-z0-9_\-\./]+|src=[\'\"]\/[A-z0-9_\-\./]+|src=[\'\"]www[A-z0-9_\-\./]+", str(strcontent))
+                        "href=['\"]http\://[A-z0-9_\-\./]+|href=['\"]\/[A-z0-9_\-\./]+|href=['\"]www[A-z0-9_\-\./]+",
+                        str(strcontent),
+                    )
+                    match3 = match3 + re.findall(
+                        "src=['\"]http\://[A-z0-9_\-\./]+|src=['\"]\/[A-z0-9_\-\./]+|src=['\"]www[A-z0-9_\-\./]+",
+                        str(strcontent),
+                    )
                     if match2:
                         if tally < iterate:
                             mutex.acquire()
                             tally += 1
                             mutex.release()
-                            strPrint = strwebsite2 + " has " + \
-                                str(len(match2)) + \
-                                " matches with keyword: " + strKeyword + "\n"
+                            strPrint = (
+                                strwebsite2
+                                + " has "
+                                + str(len(match2))
+                                + " matches with keyword: "
+                                + strKeyword
+                                + "\n"
+                            )
                             print(strPrint)
                             strFile.write(strPrint)
                         else:
@@ -76,48 +89,67 @@ def findkeywordlvl(strwebsiteinp, strmatch, queueget):
 
 def linkOptimizer(webString):
 
-    if webString.find('https://') != -1:  # if https in the string
+    if webString.find("https://") != -1:  # if https in the string
         webString = webString.replace("https://", "http://")
-    if webString.find('http://') == -1:  # if http not in string
-        if webString.find('www') != -1:  # if www in string
+    if webString.find("http://") == -1:  # if http not in string
+        if webString.find("www") != -1:  # if www in string
             webString = webString.replace("www.", "http://")
         else:
             webString = "http://" + webString
-    elif webString.find('www') != -1:  # if www in string
+    elif webString.find("www") != -1:  # if www in string
         webString = webString.replace("www.", "")
     return webString
 
 
-# standard input prompting user to first enter the url then the keyword and then choose between the 3 levels of searching he wishes the web crawler to perform the search operation from
+# standard input prompting user to first enter the url then the keyword and
+#  then choose between the 3 levels of searching he wishes the web crawler to
+# perform the search operation from
 strWebsite = input("Enter website (Format http://domain.com):\n")
 strKeyword = input("Enter keyword to search for:\n")
-intLevel = int(input(
-    "Select levels to scan. Choose 1st level or 2nd level or 3 level although 3rd level be prone to errors:\n"))
+intLevel = int(
+    input(
+        "Select levels to scan. Choose 1st level or 2nd level or 3 level\
+         although 3rd level be prone to errors:\n"
+    )
+)
 if intLevel == 3:
-    iterate = int(
-        input("Enter The Number Of Positive Results you wish to acquire:\n"))
+    iterate = int(input("Enter The Number Of Positive Results you wish to acquire:\n"))
 # creation of 2 files to log for the positive results and errors
-filename = strWebsite[7:len(strWebsite)] + " positives.log"
-filename2 = strWebsite[7:len(strWebsite)] + " errors.log"
-filename3 = strWebsite[7:len(strWebsite)] + " queue.log"
-strFile = open(filename, 'w')
-strFile2 = open(filename2, 'w')
-strFile3 = open(filename3, 'w')
+filename = strWebsite[7 : len(strWebsite)] + " positives.log"
+filename2 = strWebsite[7 : len(strWebsite)] + " errors.log"
+filename3 = strWebsite[7 : len(strWebsite)] + " queue.log"
+strFile = open(filename, "w")
+strFile2 = open(filename2, "w")
+strFile3 = open(filename3, "w")
 
-# the mentioned prefixes are removed with the http:/ because thats what the program only accepts
-# standard input prompting user to first enter the url then the keyword and then choose between the 3 levels of searching he wishes the web crawler to perform the search operation from
+# the mentioned prefixes are removed with the http:/ because thats what
+# the program only accepts standard input prompting user to
+#  first enter the url then the keyword and then choose between the 3 levels
+# of searching he wishes the web crawler to perform the search operation from
 strWebsite = linkOptimizer(strWebsite)
 
 # url is opened using the urllib library
 strContent = urllib.request.urlopen(strWebsite).read()
-# this line of code is comparing the strings of the returned with the keyword using the re library
+# this line of code is comparing the strings
+# of the returned with the keyword using the re library
 match2 = re.findall(re.escape(strKeyword), str(strContent))
 match3 = []
 
 if match2:
-    # this one just searches the webpage once and returns the result and accounts for the 1st level of search of the web crawler
-    strPrint = strWebsite + " has " + \
-        str(len(match2)) + " matches with keyword: " + strKeyword + "\n"
+
+    """
+    # this one just searches the webpage once and returns the result and
+    # accounts for the 1st level of search of the web crawler
+    """
+
+    strPrint = (
+        strWebsite
+        + " has "
+        + str(len(match2))
+        + " matches with keyword: "
+        + strKeyword
+        + "\n"
+    )
     print(strPrint)
     strFile.write(strPrint)
 else:
@@ -126,8 +158,10 @@ else:
 if intLevel == 1:
     print("Finished scanning website for keywords")
 elif intLevel in range(2, 4):
-    regex1 = r"src=[\'\"]http\://[A-z0-9_\-\./]+|src=[\'\"]\/[A-z0-9_\-\./]+|src=[\'\"]www[A-z0-9_\-\./]+"
-    regex2 = r"href=[\'\"]http\://[A-z0-9_\-\./]+|href=[\'\"]\/[A-z0-9_\-\./]+|href=[\'\"]www[A-z0-9_\-\./]+"
+    regex1 = r"src=[\'\"]http\://[A-z0-9_\-\./]+|src=[\'\"]\/[A-z0-9_\-\./]+\
+    |src=[\'\"]www[A-z0-9_\-\./]+"
+    regex2 = r"href=[\'\"]http\://[A-z0-9_\-\./]+|href=[\'\"]\/[A-z0-9_\-\./]+\
+    |href=[\'\"]www[A-z0-9_\-\./]+"
 
     results = []
 
@@ -141,8 +175,7 @@ elif intLevel in range(2, 4):
     i = 0
     while i < len(match):
         if threading.active_count() < 10:
-            t = threading.Thread(target=findkeywordlvl,
-                                 args=(strWebsite, match[i], q))
+            t = threading.Thread(target=findkeywordlvl, args=(strWebsite, match[i], q))
             t.start()
             threads.append(t)
             i += 1
@@ -159,8 +192,12 @@ elif intLevel in range(2, 4):
         for i in range(0, len(results)):
             while j < len(results[i][1]):
                 if threading.active_count() < 10:
-                    threads.append(threading.Thread(
-                        target=findkeywordlvl, args=(results[i][0], results[i][1][j], q)))
+                    threads.append(
+                        threading.Thread(
+                            target=findkeywordlvl,
+                            args=(results[i][0], results[i][1][j], q),
+                        )
+                    )
                     threads[j].start()
                     j += 1
         for p in threads:
